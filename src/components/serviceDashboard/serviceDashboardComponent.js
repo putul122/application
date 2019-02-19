@@ -78,9 +78,9 @@ export default function ServiceDashboard (props) {
         <div className='col-md-10'>
           <h3>&nbsp;</h3>
         </div>
-        <div className='col-md-2'>
+        {/* <div className='col-md-2'>
           <a href='javascript:void(0);' className='btn btn-outline-info btn-sm'>Add Templates</a>&nbsp;
-        </div>
+        </div> */}
       </div>
       <div className='row' id='agreementSummary'>
         <div className='col-md-4'>
