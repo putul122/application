@@ -1,9 +1,9 @@
 import { createAction, handleActions } from 'redux-actions'
-import { 
+import {
   FETCH_CLIENT_ACCESS_TOKEN_SUCCESS,
   FETCH_USER_AUTHENTICATION_SUCCESS,
-  UPDATE_NOTIFICATION_VIEW_STATUS_SUCCESS,
-  FETCH_PACKAGE_SUCCESS 
+  FETCH_PACKAGE_SUCCESS,
+  UPDATE_NOTIFICATION_VIEW_STATUS_SUCCESS
 } from '../../sagas/basic/basicSaga'
 // Name Spaced Action Types
 const INCREMENT = 'BasicReducer/INCREMENT'
@@ -68,8 +68,6 @@ export const actionCreators = {
 }
 
 export const initialState = {
-  // count: 0,
-  // string: 'number',
   modalIsOpen: false,
   successmodalIsOpen: false,
   currentPage: 1,

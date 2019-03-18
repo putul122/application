@@ -8,16 +8,15 @@ import { actionCreators as basicActionCreators } from '../../redux/reducers/basi
 export function mapStateToProps (state, props) {
   return {
     authenticateUser: state.basicReducer.authenticateUser,
-    showToasterSuccess: state.basicReducer.showToasterSuccess,
-    packages: state.basicReducer.packages
+    dashboardPerspectives: state.serviceDashboardReducer.dashboardPerspectives
   }
 }
 // In Object form, each funciton is automatically wrapped in a dispatch
 export const propsMapping: Callbacks = {
   fetchUserAuthentication: sagaActions.basicActions.fetchUserAuthentication,
-  fetchPackage: sagaActions.basicActions.fetchPackage,
   setBreadcrumb: basicActionCreators.setBreadcrumb,
-  setToasterSuccessStatus: basicActionCreators.setToasterSuccessStatus
+  setToasterSuccessStatus: basicActionCreators.setToasterSuccessStatus,
+  fetchModelPrespectives: sagaActions.modelActions.fetchModelPrespectives
 }
 
 // If you want to use the function mapping
@@ -31,19 +30,22 @@ export default compose(
   connect(mapStateToProps, propsMapping),
   lifecycle({
     componentWillMount: function () {
+      // eslint-disable-next-line
+      mApp && mApp.blockPage({overlayColor:'#000000',type:'loader',state:'success',message:'Processing...'})
       this.props.fetchUserAuthentication && this.props.fetchUserAuthentication()
-      this.props.fetchPackage && this.props.fetchPackage()
-      let breadcrumb = {
-        title: 'Home',
-        items: [
-          {
-            name: 'Home',
-            href: '/home',
-            separator: false
-          }
-        ]
-      }
-      this.props.setBreadcrumb && this.props.setBreadcrumb(breadcrumb)
+      let appPackage = JSON.parse(localStorage.getItem('packages'))
+      let perspectives = appPackage.resources[0].perspectives
+      let count = 0
+      let payload = {}
+      perspectives.forEach(function (data, index) {
+        if (data.role_key === 'Dashboard_Count') {
+          payload['meta_model_perspective_id[' + count + ']'] = data.perspective
+          payload['view_key[' + count + ']'] = data.view_key
+          count++
+        }
+      })
+      console.log('payload', payload)
+      this.props.fetchModelPrespectives && this.props.fetchModelPrespectives(payload)
     },
     componentDidMount: function () {},
     componentWillReceiveProps: function (nextProps) {
@@ -53,8 +55,9 @@ export default compose(
           this.props.history.push('/')
         }
       }
-      if (nextProps.packages && nextProps.packages !== this.props.packages) {
-        localStorage.setItem('packages', JSON.stringify(nextProps.packages))
+      if (nextProps.dashboardPerspectives && nextProps.dashboardPerspectives !== '') {
+        // eslint-disable-next-line
+        mApp && mApp.unblockPage()
       }
     }
   })
