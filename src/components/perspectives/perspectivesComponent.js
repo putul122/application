@@ -1,12 +1,12 @@
 import React from 'react'
 import _ from 'lodash'
-import debounce from 'lodash/debounce'
 import ReactModal from 'react-modal'
 import Select from 'react-select'
 import moment from 'moment'
 import DatePicker from 'react-datepicker'
 import PropTypes from 'prop-types'
 import styles from './perspectivesComponent.scss'
+import 'react-datepicker/dist/react-datepicker.css'
 ReactModal.setAppElement('#root')
 let comparer = function (otherArray) {
   return function (current) {
@@ -15,9 +15,8 @@ let comparer = function (otherArray) {
     }).length === 0
   }
 }
-const customStylescrud = { content: { top: '15%', left: '8%', background: 'none', border: '0px', overflow: 'none', margin: 'auto' } }
+const customStylescrud = { content: { top: '10%', left: '8%', background: 'none', border: '0px', overflow: 'none', margin: 'auto' } }
 export default function Perspectives (props) {
-  console.log('perspectives props', props)
   let connectionSelectBoxList = ''
   let businessPropertyList = ''
   let searchTextBox
@@ -33,8 +32,8 @@ export default function Perspectives (props) {
   let tableHeader = []
   let labels = []
   let messageList = ''
-  let style = {}
   let serviceName = props.addSettings.deleteObject ? props.addSettings.deleteObject.subject_name : ''
+  console.log('perspectives props', props, searchTextBox, styles)
   let editProperty = function (index, value) {
     let connectionData = {...props.connectionData}
     let customerProperty = connectionData.customerProperty
@@ -301,7 +300,7 @@ export default function Perspectives (props) {
           }
           patchPayload.push(obj)
         } else if (partData.standard_property === null && partData.type_property === null) { // Connection Property
-          let dataIndex = connectionData.data.findIndex(p => p.name == partData.name)
+          let dataIndex = connectionData.data.findIndex(p => p.name === partData.name)
           console.log('dataIndex', dataIndex)
           if (dataIndex !== -1) {
             // found index
@@ -760,11 +759,6 @@ export default function Perspectives (props) {
       ))
     }
   }
-  if (props.addSettings.createResponse !== null) {
-    style = {'height': 'calc(60vh - 55px)', 'overflow': 'auto'}
-  } else {
-    style = {}
-  }
 return (
   <div>
     <div id='entitlementList'>
@@ -911,13 +905,13 @@ return (
       </ReactModal>
       <ReactModal isOpen={props.addSettings.isEditModalOpen}
         onRequestClose={closeModal}
-        className='modal-dialog modal-lg'
-        style={{'content': {'top': '20%'}}}
+        // className='modal-dialog modal-lg'
+        style={customStylescrud}
         >
         {/* <button onClick={closeModal} ><i className='la la-close' /></button> */}
         <div className={''}>
           <div className=''>
-            <div className='modal-content' style={{'height': '400px'}}>
+            <div className='modal-content' >
               <div className='modal-header'>
                 {props.addSettings.updateResponse === null && (<h4 className='modal-title' id='exampleModalLabel'>Edit Perspective</h4>)}
                 {props.addSettings.updateResponse !== null && (<h4 className='modal-title' id='exampleModalLabel'>Update Report</h4>)}
@@ -925,7 +919,7 @@ return (
                   <span aria-hidden='true'>×</span>
                 </button>
               </div>
-              <div className='modal-body' style={{'height': 'calc(60vh - 55px)', 'overflow': 'auto'}}>
+              <div className='modal-body' style={{'height': 'calc(70vh - 30px)', 'overflow': 'auto'}}>
                 {props.addSettings.updateResponse === null && (<div className='col-md-12'>
                   {/* {messageBlock} */}
                   <div className='form-group m-form__group row'>
@@ -994,12 +988,11 @@ return (
   }
   Perspectives.propTypes = {
     addSettings: PropTypes.any,
-    setModalOpenStatus: PropTypes.func,
     modelPrespectives: PropTypes.any,
     metaModelPerspective: PropTypes.any,
     currentPage: PropTypes.any,
     perPage: PropTypes.any,
-    crude: PropTypes.any,
+    // crude: PropTypes.any,
     availableAction: PropTypes.any,
     connectionData: PropTypes.any
   }

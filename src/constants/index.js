@@ -97,7 +97,8 @@ const api = {
         return 'https://account-eco-dev.ecoconductor.com/roles/' + roleId
     },
     iconURL: 'https://ecoconductor-dev-api-resources.azurewebsites.net/icons/',
-    getPackage: 'https://model-eco-dev.ecoconductor.com/model_packages/ECO_SM'
+    getPackage: 'https://model-eco-dev.ecoconductor.com/model_packages/ECO_SM',
+    getSLAPackage: 'https://model-eco-dev.ecoconductor.com/model_packages/ECO_SLA'
   }
 
 export default api

@@ -156,14 +156,14 @@ export default class Root extends Component {
 		}
 		resolve(require('../perspectivesPage/perspectivesPageRoute').default)
 	break
-	case 'viewService':
+	case 'perspectiveHierarchy':
 		if (module.hot) {
-						module.hot.accept('../viewServicePage/viewServicePageRoute', () => {
-				require('../viewServicePage/viewServicePageRoute').default // eslint-disable-line
+						module.hot.accept('../perspectiveHierarchyPage/perspectiveHierarchyPageRoute', () => {
+				require('../perspectiveHierarchyPage/perspectiveHierarchyPageRoute').default // eslint-disable-line
 								this.forceUpdate()
 						})
 		}
-		resolve(require('../viewServicePage/viewServicePageRoute').default)
+		resolve(require('../perspectiveHierarchyPage/perspectiveHierarchyPageRoute').default)
 	break
 	case 'users':
 		if (module.hot) {
@@ -202,7 +202,7 @@ export default class Root extends Component {
         <Route exact path='/registering' component={(props) => this.loadView('registerProcess', props)} />
         <Route exact path='/home' component={(props) => this.loadView('home', props)} />
         <Route exact path='/explorer' component={(props) => this.loadView('explorer', props)} />
-        <Route exact path='/service_dashboard' component={(props) => this.loadView('serviceDashboard', props)} />
+        <Route exact path='/select-module/:dashboardKey' component={(props) => this.loadView('serviceDashboard', props)} />
         <Route exact path='/tasks' component={(props) => this.loadView('tasks', props)} />
         <Route exact path='/tasks/:id' component={(props) => this.loadView('taskDetail', props)} />
         <Route exact path='/component_types' component={(props) => this.loadView('components', props)} />
@@ -211,7 +211,7 @@ export default class Root extends Component {
         <Route exact path='/forgot_password' component={(props) => this.loadView('forgotPassword', props)} />
         <Route exact path='/change_password' component={(props) => this.loadView('changePassword', props)} />
         <Route exact path='/perspectives/:id/:viewKey' component={(props) => this.loadView('perspectives', props)} />
-        <Route exact path='/services/:id' component={(props) => this.loadView('viewService', props)} />
+        <Route exact path='/perspective_hierarchy/:id/:viewKey' component={(props) => this.loadView('perspectiveHierarchy', props)} />
         <Route exact path='/' component={(props) => this.loadView('landing', props)} />
       </Switch>
     </BrowserRouter>

@@ -29,16 +29,16 @@ export default function Login (props) {
       // let name = FullNameBox.value
       // name.split(' ', 2)[0] + Math.random()
       // To set unique user id in your system when it is available
-      window.fcWidget.setExternalId(EmailBox.value)
+      // window.fcWidget.setExternalId(EmailBox.value)
       // To set user name
       // window.fcWidget.user.setFirstName(name)
       // To set user email
-      window.fcWidget.user.setEmail(PasswordBox.value)
+      // window.fcWidget.user.setEmail(PasswordBox.value)
       // To set user properties
-      window.fcWidget.user.setProperties({
-        plan: 'Estate',                 // meta property 1
-        status: 'Active'                // meta property 2
-      })
+      // window.fcWidget.user.setProperties({
+      //   plan: 'Estate',                 // meta property 1
+      //   status: 'Active'                // meta property 2
+      // })
     }
     let payload = {
       'email': EmailBox.value,
