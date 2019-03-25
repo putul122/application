@@ -89,6 +89,7 @@ export const initialState = {
   dropdownData: '',
   expandSettings: {
     level: null,
+    blankColumn: [],
     selectedObject: [],
     modelPerspectives: [],
     metaModelPerspectives: [],

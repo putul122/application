@@ -38,7 +38,6 @@ export default function PerspectiveHierarchy (props) {
   console.log('perspectives props', props, searchTextBox, expandSettings)
   let handleClick = function (data, level) {
     console.log(data)
-    console.log('level', level)
     let expandFlag = true
     let expandSettings = {...props.expandSettings}
     let selectedObject = expandSettings.selectedObject[level]
@@ -471,64 +470,8 @@ export default function PerspectiveHierarchy (props) {
     }
     closeModal()
   }
-  let genericExpandRow = function (value, startLevel) {
-    let childList = ''
-    let expandSettings = JSON.parse(JSON.stringify(props.expandSettings))
-    let expandLevel = expandSettings.level
-    if (expandLevel >= startLevel) {
-      if (expandSettings.selectedObject[expandLevel].name === value && expandSettings.selectedObject[expandLevel].expandFlag) {
-        // faClass = 'fa fa-minus'
-        console.log('expandSettings', expandSettings)
-        if (props.expandSettings.modelPerspectives[expandLevel].length > 0) {
-          let childLabelParts = props.expandSettings.metaModelPerspectives[expandLevel].parts
-          console.log('childLabelParts', childLabelParts)
-          childList = props.expandSettings.modelPerspectives[expandLevel].map(function (childData, idx) {
-            let childRowColumn = []
-            let faClass = 'fa fa-plus'
-            let selectedObject = {}
-            console.log('childData', childData)
-            if (childData.parts) {
-              childData.parts.forEach(function (childPartData, cix) {
-                let childValue
-                let isChildName = false
-                if (childLabelParts[cix].standard_property !== null && childLabelParts[cix].type_property === null) { // Standard Property
-                  isChildName = true
-                  childValue = childPartData ? childPartData.value : ''
-                  selectedObject.name = childValue
-                  // childRowColumn.push(<td className='' key={'ch_' + '_' + idx + '_' + cix}>{isChildName && (<i className={'fa fa-plus'} aria-hidden='true' style={{'cursor': 'pointer'}} />)} {childValue}</td>)
-                } else if (childLabelParts[cix].standard_property === null && childLabelParts[cix].type_property === null) { // Connection Property
-                  // console.log('partData', partData, labelParts[ix], ix)
-                  if (childLabelParts[cix].constraint_perspective) {
-                    selectedObject.parentReference = childPartData.value.parent_reference
-                    childValue = childLabelParts[cix].constraint_perspective.name
-                    selectedObject.metaModelPerspectives = childLabelParts[cix].constraint_perspective
-                    // childRowColumn.push(<td className='' key={'ch_' + '_' + idx + '_' + cix}>{isChildName && (<i className={'fa fa-plus'} aria-hidden='true' style={{'cursor': 'pointer'}} />)} {childValue}</td>)
-                  }
-                }
-                childRowColumn.push(<td className='' key={'ch_' + '_' + idx + '_' + cix}>{isChildName && (<i className={faClass} aria-hidden='true' onClick={(event) => { event.preventDefault(); handleClick(selectedObject, expandLevel + 1) }} style={{'cursor': 'pointer'}} />)} {childValue}</td>)
-              })
-            }
-            return (
-              <tr key={'child' + idx}>
-                <td>{''}</td>
-                <td>{''}</td>
-                <td>{''}</td>
-                {childRowColumn}
-                <td>{''}</td>
-              </tr>
-            )
-          })
-        } else {
-          childList = []
-          childList.push((
-            <tr key={0}>
-              <td colSpan='5'>{'No data to display'}</td>
-            </tr>
-          ))
-        }
-      }
-    }
-    return childList
+  let genericExpandRow = function () {
+    
   }
   let listModelPrespectives = function () {
     console.log('list modal pers', props)
@@ -550,7 +493,7 @@ export default function PerspectiveHierarchy (props) {
         modelPrespectives.splice(-1, 1)
         if (modelPrespectives.length > 1) {
           let expandSettings = JSON.parse(JSON.stringify(props.expandSettings))
-          // let expandLevel = expandSettings.level
+          let expandLevel = expandSettings.level
           modelPrespectivesList = modelPrespectives.slice(perPage * (currentPage - 1), ((currentPage - 1) + 1) * perPage).map(function (data, index) {
             if (data.error_code === null) {
               let rowColumn = []
@@ -568,9 +511,49 @@ export default function PerspectiveHierarchy (props) {
                     selectedObject.name = value
                     if (expandSettings.level !== null) {
                       // expand row is clicked for first row
-                      if (expandSettings.level >= 0) {
-                        let startLevel = 0
-                        childList = genericExpandRow(value, startLevel)
+                      if (expandSettings.level === 0) {
+                        if (expandSettings.selectedObject[expandLevel].name === value && expandSettings.selectedObject[expandLevel].expandFlag) {
+                          faClass = 'fa fa-minus'
+                          console.log('expandSettings', expandSettings)
+                          if (props.expandSettings.modelPerspectives[expandLevel].length > 0) {
+                            let childLabelParts = props.expandSettings.metaModelPerspectives[expandLevel].parts
+                            console.log('childLabelParts', childLabelParts)
+                            childList = props.expandSettings.modelPerspectives[expandLevel].map(function (childData, idx) {
+                              let childRowColumn = []
+                              console.log('childData', childData)
+                              if (childData.parts) {
+                                childData.parts.forEach(function (childPartData, cix) {
+                                  let childValue
+                                  let isChildName = false
+                                  if (childLabelParts[cix].standard_property !== null && childLabelParts[cix].type_property === null) { // Standard Property
+                                    isChildName = true
+                                    childValue = childPartData ? childPartData.value : ''
+                                    childRowColumn.push(<td className='' key={'ch_' + index + '_' + idx + '_' + cix}>{isChildName && (<i className={'fa fa-plus'} aria-hidden='true' style={{'cursor': 'pointer'}} />)} {childValue}</td>)
+                                  } else {
+                                    childValue = ''
+                                  }
+                                  // childRowColumn.push(<td className='' key={'ch_' + index + '_' + idx + '_' + cix}>{isChildName && (<i className={'fa fa-minus'} aria-hidden='true' style={{'cursor': 'pointer'}} />)} {childValue}</td>)
+                                })
+                              }
+                              return (
+                                <tr key={'child' + idx}>
+                                  <td>{''}</td>
+                                  <td>{''}</td>
+                                  <td>{''}</td>
+                                  {childRowColumn}
+                                  <td>{''}</td>
+                                </tr>
+                              )
+                            })
+                          } else {
+                            childList = []
+                            childList.push((
+                              <tr key={0}>
+                                <td colSpan='5'>{'No data to display'}</td>
+                              </tr>
+                            ))
+                          }
+                        }
                       }
                     }
                   } else if (labelParts[ix].standard_property === null && labelParts[ix].type_property === null) { // Connection Property
