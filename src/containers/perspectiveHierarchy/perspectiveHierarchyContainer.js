@@ -2,25 +2,27 @@ import { connect } from 'react-redux'
 import { compose, lifecycle } from 'recompose'
 import PerspectiveHierarchy from '../../components/perspectiveHierarchy/perspectiveHierarchyComponent'
 import { actions as sagaActions } from '../../redux/sagas'
-import { actionCreators } from '../../redux/reducers/perspectivesReducer/perspectivesReducerReducer'
+import { actionCreators } from '../../redux/reducers/perspectiveHierarchy/perspectiveHierarchyReducer'
 import { actionCreators as basicActionCreators } from '../../redux/reducers/basicReducer/basicReducerReducer'
 console.log('sagaActions', sagaActions)
 // Global State
 export function mapStateToProps (state, props) {
   return {
     authenticateUser: state.basicReducer.authenticateUser,
-    modelPrespectives: state.perspectivesReducer.modelPrespectives,
-    metaModelPerspective: state.perspectivesReducer.metaModelPerspective,
-    currentPage: state.perspectivesReducer.currentPage,
-    perPage: state.perspectivesReducer.perPage,
-    crude: state.perspectivesReducer.crude,
-    addSettings: state.perspectivesReducer.addSettings,
-    availableAction: state.perspectivesReducer.availableAction,
-    createComponentResponse: state.perspectivesReducer.createComponentResponse,
-    deleteComponentResponse: state.perspectivesReducer.deleteComponentResponse,
-    connectionData: state.perspectivesReducer.connectionData,
-    updateComponentResponse: state.perspectivesReducer.updateComponentResponse,
-    dropdownData: state.perspectivesReducer.dropdownData
+    modelPrespectives: state.perspectiveHierarchyReducer.modelPrespectives,
+    metaModelPerspective: state.perspectiveHierarchyReducer.metaModelPerspective,
+    currentPage: state.perspectiveHierarchyReducer.currentPage,
+    perPage: state.perspectiveHierarchyReducer.perPage,
+    crude: state.perspectiveHierarchyReducer.crude,
+    addSettings: state.perspectiveHierarchyReducer.addSettings,
+    availableAction: state.perspectiveHierarchyReducer.availableAction,
+    createComponentResponse: state.perspectiveHierarchyReducer.createComponentResponse,
+    deleteComponentResponse: state.perspectiveHierarchyReducer.deleteComponentResponse,
+    connectionData: state.perspectiveHierarchyReducer.connectionData,
+    updateComponentResponse: state.perspectiveHierarchyReducer.updateComponentResponse,
+    dropdownData: state.perspectiveHierarchyReducer.dropdownData,
+    expandSettings: state.perspectiveHierarchyReducer.expandSettings,
+    nestedModelPerspectives: state.perspectiveHierarchyReducer.nestedModelPerspectives
   }
 }
 // In Object form, each funciton is automatically wrapped in a dispatch
@@ -39,7 +41,9 @@ export const propsMapping: Callbacks = {
   deleteComponentModelPerspectives: sagaActions.modelActions.deleteComponentModelPerspectives,
   setConnectionData: actionCreators.setConnectionData,
   updateModelPrespectives: sagaActions.modelActions.updateModelPrespectives,
-  updateComponentModelPrespectives: sagaActions.modelActions.updateComponentModelPrespectives
+  updateComponentModelPrespectives: sagaActions.modelActions.updateComponentModelPrespectives,
+  fetchNestedModelPrespectives: sagaActions.serviceActions.fetchNestedModelPrespectives,
+  setExpandSettings: actionCreators.setExpandSettings
 }
 
 // If you want to use the function mapping
@@ -72,7 +76,7 @@ export default compose(
   lifecycle({
     componentWillMount: function () {
       // eslint-disable-next-line
-      mApp && mApp.blockPage({overlayColor:'#000000',type:'loader',state:'success',message:'Processing...'})
+      // mApp && mApp.blockPage({overlayColor:'#000000',type:'loader',state:'success',message:'Processing...'})
       this.props.fetchUserAuthentication && this.props.fetchUserAuthentication()
       let payload = {}
       payload['meta_model_perspective_id[0]'] = this.props.match.params.id
@@ -80,8 +84,24 @@ export default compose(
       this.props.fetchModelPrespectives && this.props.fetchModelPrespectives(payload)
       let metaModelPrespectivePayload = {}
       metaModelPrespectivePayload.id = this.props.match.params.id
-      metaModelPrespectivePayload.viewKey = {viewKey: this.props.match.params.viewKey}
+      metaModelPrespectivePayload.viewKey = {'view_key': this.props.match.params.viewKey}
       this.props.fetchMetaModelPrespective && this.props.fetchMetaModelPrespective(metaModelPrespectivePayload)
+      let payload1 = {}
+      payload1['meta_model_perspective_id[0]'] = 16
+      payload1['parent_reference'] = '8JWqhPHZJ0'
+      this.props.fetchNestedModelPrespectives && this.props.fetchNestedModelPrespectives(payload1)
+      let payload2 = {}
+      payload2['meta_model_perspective_id[0]'] = 14
+      payload2['parent_reference'] = 'dxwzT6HLVJ'
+      this.props.fetchNestedModelPrespectives && this.props.fetchNestedModelPrespectives(payload2)
+      let payload3 = {}
+      payload3['meta_model_perspective_id[0]'] = 17
+      payload3['parent_reference'] = 'dxwJC6HLVj'
+      this.props.fetchNestedModelPrespectives && this.props.fetchNestedModelPrespectives(payload3)
+      let payload4 = {}
+      payload4['meta_model_perspective_id[0]'] = 18
+      payload4['parent_reference'] = '2v0Uls0zw'
+      this.props.fetchNestedModelPrespectives && this.props.fetchNestedModelPrespectives(payload4)
     },
     componentDidMount: function () {
       // eslint-disable-next-line
@@ -218,6 +238,26 @@ export default compose(
           toastr.error(nextProps.dropdownData.error_message, nextProps.dropdownData.error_code)
         }
         this.props.resetResponse()
+      }
+      if (nextProps.nestedModelPerspectives !== '' && nextProps.expandSettings.processAPIResponse) {
+        console.log('nextProps.nestedModelPerspectives', nextProps.nestedModelPerspectives)
+        if (nextProps.nestedModelPerspectives.length > 0) {
+          let expandSettings = JSON.parse(JSON.stringify(nextProps.expandSettings))
+          let level = expandSettings.level
+          let modelPerspectives = []
+          nextProps.nestedModelPerspectives.forEach(function (data, index) {
+            if (data.parts) {
+              modelPerspectives.push(data)
+            }
+          })
+          expandSettings.modelPerspectives[level] = modelPerspectives
+          expandSettings.processAPIResponse = false
+          nextProps.setExpandSettings(expandSettings)
+        } else {
+          // eslint-disable-next-line
+          toastr.error(nextProps.nestedModelPerspectives.error_message, nextProps.nestedModelPerspectives.error_code)
+        }
+        nextProps.resetResponse()
       }
     }
   })

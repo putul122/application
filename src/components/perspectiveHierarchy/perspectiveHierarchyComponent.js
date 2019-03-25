@@ -33,7 +33,41 @@ export default function PerspectiveHierarchy (props) {
   let labels = []
   let messageList = ''
   let serviceName = props.addSettings.deleteObject ? props.addSettings.deleteObject.subject_name : ''
-  console.log('perspectives props', props, searchTextBox, styles)
+  let expandSettings = props.expandSettings
+  console.log('perspectives props', props, searchTextBox, expandSettings)
+  let handleClick = function (data, level) {
+    console.log(data)
+    let expandFlag = true
+    let expandSettings = {...props.expandSettings}
+    let selectedObject = expandSettings.selectedObject[level]
+    console.log('selectedObject', selectedObject)
+    if (selectedObject && selectedObject.name === data.name) {
+      expandFlag = !selectedObject.expandFlag
+      console.log('test flag', expandFlag)
+      if (!expandFlag) {
+        // resetList()
+        // props.resetResponse()
+      }
+    } else {
+      expandFlag = true
+      expandSettings.metaModelPerspectives[level] = data.metaModelPerspectives
+      expandSettings.selectedObject[level] = data
+    }
+    if (expandFlag) {
+      expandSettings.processAPIResponse = true
+      let payload = {}
+      payload['meta_model_perspective_id'] = data.metaModelPerspectives.id
+      payload['view_key'] = 'ContractsListAgreements'
+      payload['parent_reference'] = '8JWqhPHZJ0' // data.parentReference
+      props.fetchNestedModelPrespectives(payload)
+    }
+    expandSettings.selectedObject[level].expandFlag = expandFlag
+    expandSettings.level = level
+    props.setExpandSettings(expandSettings)
+    // props.fetchSupplierSoftwares && props.fetchSupplierSoftwares(payload)
+    // eslint-disable-next-line
+    // mApp && mApp.block('#supplierList', {overlayColor:'#000000',type:'loader',state:'success',message:'Processing...'})
+  }
   let editProperty = function (index, value) {
     let connectionData = {...props.connectionData}
     let customerProperty = connectionData.customerProperty
@@ -452,20 +486,71 @@ export default function PerspectiveHierarchy (props) {
       //   }
       // }
       console.log('list props', props)
-      if (props.modelPrespectives.length > 1) {
+      if (props.modelPrespectives.length > 1 && !props.expandSettings.processAPIResponse) {
         let modelPrespectives = _.filter(props.modelPrespectives, {'error_code': null})
         modelPrespectives.splice(-1, 1)
         if (modelPrespectives.length > 1) {
+          let expandSettings = JSON.parse(JSON.stringify(props.expandSettings))
+          let expandLevel = expandSettings.level
           modelPrespectivesList = modelPrespectives.slice(perPage * (currentPage - 1), ((currentPage - 1) + 1) * perPage).map(function (data, index) {
             if (data.error_code === null) {
-              let childList = []
+              let rowColumn = []
+              let faClass = 'fa fa-plus'
+              let childList = ''
+              let selectedObject = {}
               if (data.parts) {
                 data.parts.forEach(function (partData, ix) {
                   let value
+                  let isName = false
                   if (labelParts[ix].standard_property !== null && labelParts[ix].type_property === null) { // Standard Property
+                    // console.log('partData standard property', partData, labelParts[ix], ix)
+                    isName = true
                     value = partData ? partData.value : ''
+                    selectedObject.name = value
+                    if (expandSettings.level !== null) {
+                      // expand row is clicked for first row
+                      if (expandSettings.level === 0) {
+                        if (expandSettings.selectedObject[expandLevel].name === value) {
+                          faClass = 'fa fa-minus'
+                          console.log('expandSettings', expandSettings)
+                          if (props.expandSettings.modelPerspectives[expandLevel].length > 0) {
+                            let childLabelParts = props.expandSettings.metaModelPerspectives[expandLevel].parts
+                            console.log('childLabelParts', childLabelParts)
+                            childList = props.expandSettings.modelPerspectives[expandLevel].map(function (childData, idx) {
+                              let childRowColumn = []
+                              console.log('childData', childData)
+                              if (childData.parts) {
+                                childData.parts.forEach(function (childPartData, cix) {
+                                  let childValue
+                                  let isChildName = false
+                                  if (childLabelParts[cix].standard_property !== null && childLabelParts[cix].type_property === null) { // Standard Property
+                                    isChildName = true
+                                    childValue = partData ? partData.value : ''
+                                  } else {
+                                    childValue = ''
+                                  }
+                                  childRowColumn.push(<td className='' key={'ch_' + index + '_' + idx + '_' + cix}>{isChildName && (<i className={'fa fa-minus'} aria-hidden='true' style={{'cursor': 'pointer'}} />)} {childValue}</td>)
+                                })
+                              }
+                              return (
+                                <tr key={'child' + idx}>
+                                  {childRowColumn}
+                                </tr>
+                              )
+                            })
+                          } else {
+                            childList = []
+                            childList.push((
+                              <tr key={0}>
+                                <td colSpan='5'>{'No data to display'}</td>
+                              </tr>
+                            ))
+                          }
+                        }
+                      }
+                    }
                   } else if (labelParts[ix].standard_property === null && labelParts[ix].type_property === null) { // Connection Property
-                    console.log('partData', partData, labelParts, ix)
+                    // console.log('partData', partData, labelParts[ix], ix)
                     if (Array.isArray(partData.value)) {
                       let targetComponents = []
                       partData.value.forEach(function (data, index) {
@@ -473,7 +558,9 @@ export default function PerspectiveHierarchy (props) {
                       })
                       value = targetComponents.toString()
                     } else {
-                      value = partData.value.parent_reference || ''
+                      selectedObject.parentReference = partData.value.parent_reference
+                      value = 'Add Agreement'
+                      selectedObject.metaModelPerspectives = labelParts[ix].constraint_perspective
                     }
                     // value = ''
                   } else if (labelParts[ix].type_property.property_type.key === 'Integer') { // below are Customer Property
@@ -491,7 +578,8 @@ export default function PerspectiveHierarchy (props) {
                   } else {
                     value = partData.value !== null ? partData.value.other_value : ''
                   }
-                  childList.push(<td className='' key={'ch_' + index + '_' + ix}>{value}</td>)
+                  // console.log('value', value)
+                  rowColumn.push(<td className='' key={'ch_' + index + '_' + ix}>{isName && (<i className={faClass} aria-hidden='true' onClick={(event) => { event.preventDefault(); handleClick(selectedObject, 0) }} style={{'cursor': 'pointer'}} />)} {value}</td>)
                 })
                 let availableAction = {...props.availableAction}
                 let list = []
@@ -501,9 +589,16 @@ export default function PerspectiveHierarchy (props) {
                 if (availableAction.Delete) {
                   list.push(<a onClick={(event) => { event.preventDefault(); openDeleteModal(data) }} href='javascript:void(0);'>{'Delete'}</a>)
                 }
-                childList.push(<td className='' key={'last' + index}>{list}</td>)
+                rowColumn.push(<td className='' key={'last' + index}>{list}</td>)
               }
-              return (<tr key={index}>{childList}</tr>)
+              return (
+                <tbody>
+                  <tr key={index}>
+                    {rowColumn}
+                  </tr>
+                  {childList}
+                </tbody>
+              )
             }
           })
           // props.setConnectionData(connectionData)
@@ -818,9 +913,9 @@ return (
                             {tableHeader}
                           </tr>
                         </thead>
-                        <tbody>
-                          {modelPrespectivesList}
-                        </tbody>
+                        {/* <tbody> */}
+                        {modelPrespectivesList}
+                        {/* </tbody> */}
                       </table>
                     </div>
                     <div className='row'>
@@ -996,5 +1091,6 @@ return (
     perPage: PropTypes.any,
     // crude: PropTypes.any,
     availableAction: PropTypes.any,
-    connectionData: PropTypes.any
+    connectionData: PropTypes.any,
+    expandSettings: PropTypes.any
   }

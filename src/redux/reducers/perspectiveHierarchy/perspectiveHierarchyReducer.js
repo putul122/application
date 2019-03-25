@@ -8,18 +8,23 @@ import {
 } from '../../sagas/model/modelSaga'
 // import {DELETE_COMPONENT_TYPE_COMPONENT_SUCCESS} from '../../sagas/componentTypeComponent/componentTypeComponentSaga'
 // import {ADD_COMPONENT_COMPONENT_SUCCESS} from '../../sagas/applicationDetail/applicationDetailSaga'
-import {FETCH_DROPDOWN_DATA_SUCCESS} from '../../sagas/service/serviceSaga'
+import {
+  FETCH_DROPDOWN_DATA_SUCCESS,
+  FETCH_NESTED_MODEL_PRESPECTIVES_SUCCESS
+} from '../../sagas/service/serviceSaga'
 // Name Spaced Action Types
-const SET_ADD_SETTINGS = 'perspectivesReducer/SET_ADD_SETTINGS'
-const SET_CURRENT_PAGE = 'perspectivesReducer/SET_CURRENT_PAGE'
-const SET_AVAILABLE_ACTION = 'perspectivesReducer/SET_AVAILABLE_ACTION'
-const SET_PER_PAGE = 'perspectivesReducer/SET_PER_PAGE'
-const RESET_RESPONSE = 'perspectivesReducer/RESET_RESPONSE'
-const SET_CONNECTION_DATA = 'perspectivesReducer/SET_CONNECTION_DATA'
+const SET_ADD_SETTINGS = 'perspectivesHierarchyReducer/SET_ADD_SETTINGS'
+const SET_CURRENT_PAGE = 'perspectivesHierarchyReducer/SET_CURRENT_PAGE'
+const SET_AVAILABLE_ACTION = 'perspectivesHierarchyReducer/SET_AVAILABLE_ACTION'
+const SET_PER_PAGE = 'perspectivesHierarchyReducer/SET_PER_PAGE'
+const RESET_RESPONSE = 'perspectivesHierarchyReducer/RESET_RESPONSE'
+const SET_CONNECTION_DATA = 'perspectivesHierarchyReducer/SET_CONNECTION_DATA'
+const SET_EXPAND_SETTINGS = 'perspectivesHierarchyReducer/SET_EXPAND_SETTINGS'
 
 export const actions = {
   FETCH_MODEL_PRESPECTIVES_SUCCESS,
   FETCH_META_MODEL_PRESPECTIVE_SUCCESS,
+  FETCH_NESTED_MODEL_PRESPECTIVES_SUCCESS,
   SET_CURRENT_PAGE,
   SET_ADD_SETTINGS,
   SET_AVAILABLE_ACTION,
@@ -29,7 +34,8 @@ export const actions = {
   DELETE_COMPONENT_MODEL_PERSPECTIVES_SUCCESS,
   UPDATE_COMPONENT_MODEL_PRESPECTIVES_SUCCESS,
   SET_CONNECTION_DATA,
-  FETCH_DROPDOWN_DATA_SUCCESS
+  FETCH_DROPDOWN_DATA_SUCCESS,
+  SET_EXPAND_SETTINGS
 }
 
 export const actionCreators = {
@@ -38,12 +44,14 @@ export const actionCreators = {
   setAvailableAction: createAction(SET_AVAILABLE_ACTION),
   setPerPage: createAction(SET_PER_PAGE),
   resetResponse: createAction(RESET_RESPONSE),
-  setConnectionData: createAction(SET_CONNECTION_DATA)
+  setConnectionData: createAction(SET_CONNECTION_DATA),
+  setExpandSettings: createAction(SET_EXPAND_SETTINGS)
 }
 
 export const initialState = {
   modelPrespectives: '',
   metaModelPerspective: '',
+  nestedModelPerspectives: '',
   currentPage: 1,
   perPage: 10,
   crude: {
@@ -78,7 +86,14 @@ export const initialState = {
   createComponentResponse: '',
   updateComponentResponse: '',
   deleteComponentResponse: '',
-  dropdownData: ''
+  dropdownData: '',
+  expandSettings: {
+    level: null,
+    selectedObject: [],
+    modelPerspectives: [],
+    metaModelPerspectives: [],
+    processAPIResponse: false
+  }
 }
 
 export default handleActions(
@@ -125,7 +140,8 @@ export default handleActions(
       createComponentResponse: '',
       updateComponentResponse: '',
       deleteComponentResponse: '',
-      dropdownData: ''
+      dropdownData: '',
+      nestedModelPerspectives: ''
     }),
     [SET_CONNECTION_DATA]: (state, action) => ({
       ...state,
@@ -134,6 +150,14 @@ export default handleActions(
     [FETCH_DROPDOWN_DATA_SUCCESS]: (state, action) => ({
       ...state,
       dropdownData: action.payload
+    }),
+    [SET_EXPAND_SETTINGS]: (state, action) => ({
+      ...state,
+      expandSettings: action.payload
+    }),
+    [FETCH_NESTED_MODEL_PRESPECTIVES_SUCCESS]: (state, action) => ({
+      ...state,
+      nestedModelPerspectives: action.payload
     })
   },
   initialState
