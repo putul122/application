@@ -587,6 +587,14 @@ export default function PerspectiveHierarchy (props) {
           // let expandLevel = expandSettings.level
           modelPrespectivesList = modelPrespectives.slice(perPage * (currentPage - 1), ((currentPage - 1) + 1) * perPage).map(function (data, index) {
             if (data.error_code === null) {
+              let headerColumn = []
+              props.headerData.headerColumn.forEach(function (data, index) {
+                let obj = {}
+                obj.name = data
+                obj.isProcessed = false
+                obj.level = null
+                headerColumn.push(obj)
+              })
               let rowColumn = []
               let faClass = 'fa fa-plus'
               let childList = ''
@@ -594,15 +602,17 @@ export default function PerspectiveHierarchy (props) {
               if (data.parts) {
                 data.parts.forEach(function (partData, ix) {
                   let value
-                  let isName = false
-                  let toPush = false
                   if (labelParts[ix].standard_property !== null && labelParts[ix].type_property === null) { // Standard Property
                     // console.log('partData standard property', partData, labelParts[ix], ix)
                     if (labelParts[ix].standard_property === 'name') {
-                      isName = true
-                      toPush = true
                       value = partData ? partData.value : ''
                       selectedObject.name = value
+                      let columnId = props.headerData.headerColumn.indexOf(labelParts[ix].name)
+                      if (columnId !== -1) {
+                        headerColumn[columnId].isProcessed = true
+                        headerColumn[columnId].level = 0
+                      }
+                      rowColumn.push(<td className='' key={'ch_' + index + '_' + ix}><i className={faClass} aria-hidden='true' onClick={(event) => { event.preventDefault(); handleClick(selectedObject, 0) }} style={{'cursor': 'pointer'}} />{value}</td>)
                       if (expandSettings.level !== null) {
                         // expand row is clicked for first row
                         if (expandSettings.level >= 0) {
@@ -611,58 +621,57 @@ export default function PerspectiveHierarchy (props) {
                         }
                       }
                     }
-                  } else if (labelParts[ix].standard_property === null && labelParts[ix].type_property === null) { // Connection Property
-                    // console.log('partData', partData, labelParts[ix], ix)
-                    toPush = true
-                    if (Array.isArray(partData.value)) {
-                      let targetComponents = []
-                      partData.value.forEach(function (data, index) {
-                        targetComponents.push(data.target_component.name)
-                      })
-                      value = targetComponents.toString()
-                    } else {
-                      selectedObject.parentReference = partData.value.parent_reference
-                      value = 'Add Agreement'
-                      selectedObject.metaModelPerspectives = labelParts[ix].constraint_perspective
+                  } else if (labelParts[ix].standard_property === null && labelParts[ix].type_property === null && labelParts[ix].constraint_perspective === null) { // Connection Property
+                    let targetComponents = []
+                    partData.value.forEach(function (data, index) {
+                      targetComponents.push(data.target_component.name)
+                    })
+                    value = targetComponents.toString()
+                    let columnId = props.headerData.headerColumn.indexOf(labelParts[ix].name)
+                    if (columnId !== -1) {
+                      headerColumn[columnId].isProcessed = true
+                      headerColumn[columnId].level = 0
                     }
-                    // value = ''
-                  } else if (labelParts[ix].type_property.property_type.key === 'Integer') { // below are Customer Property
-                    value = partData.value !== null ? partData.value.int_value : ''
-                  } else if (labelParts[ix].type_property.property_type.key === 'Decimal') {
-                    value = partData.value !== null ? partData.value.float_value : ''
-                  } else if (labelParts[ix].type_property.property_type.key === 'Text') {
-                    value = partData.value !== null ? partData.value.text_value : ''
-                  } else if (labelParts[ix].type_property.property_type.key === 'DateTime') {
-                    value = partData.value !== null ? partData.value.date_time_value : ''
-                  } else if (labelParts[ix].type_property.property_type.key === 'Boolean') {
-                    value = partData.value !== null ? partData.value.boolean_value : ''
-                  } else if (labelParts[ix].type_property.property_type.key === 'List') {
-                    value = partData.value !== null ? (partData.value.value_set_value ? partData.value.value_set_value.name : '') : ''
-                  } else {
-                    value = partData.value !== null ? partData.value.other_value : ''
+                    rowColumn.push(<td className='' key={'ch_' + index + '_' + ix}>{value}</td>)
+                  } else if (labelParts[ix].constraint_perspective !== null) { // Perspectives Property
+                    selectedObject.parentReference = partData.value.parent_reference
+                    value = 'Agreement'
+                    selectedObject.metaModelPerspectives = labelParts[ix].constraint_perspective
+                    let columnId = props.headerData.headerColumn.indexOf(labelParts[ix].name)
+                    if (columnId !== -1) {
+                      headerColumn[columnId].isProcessed = true
+                      headerColumn[columnId].level = 0
+                    }
+                    rowColumn.push(<td className='' key={'ch_' + index + '_' + ix}>{'Add ' + value}</td>)
                   }
                   // console.log('value', value)
-                  if (toPush) {
-                    rowColumn.push(<td className='' key={'ch_' + index + '_' + ix}>{isName && (<i className={faClass} aria-hidden='true' onClick={(event) => { event.preventDefault(); handleClick(selectedObject, 0) }} style={{'cursor': 'pointer'}} />)} {value}</td>)
-                  }
+                  // if (toPush) {
+                  //   rowColumn.push(<td className='' key={'ch_' + index + '_' + ix}>{isName && (<i className={faClass} aria-hidden='true' onClick={(event) => { event.preventDefault(); handleClick(selectedObject, 0) }} style={{'cursor': 'pointer'}} />)} {value}</td>)
+                  // }
                 })
-                let availableAction = {...props.availableAction}
-                let list = []
-                if (availableAction.Update) {
-                  list.push(<a href='javascript:void(0);' onClick={(event) => { event.preventDefault(); openUpdateModal(data) }} >{'Edit'}</a>)
-                }
-                if (availableAction.Delete) {
-                  list.push(<a onClick={(event) => { event.preventDefault(); openDeleteModal(data) }} href='javascript:void(0);'>{'Delete'}</a>)
-                }
-                rowColumn.push(<td className='' key={'last' + index}>{list}</td>)
               }
+              console.log('headerColumn ----', headerColumn)
+              headerColumn.forEach(function (columnData, cid) {
+                if (!columnData.isProcessed) {
+                  rowColumn.push(<td className='' key={'ch_' + index + '_cid' + cid}>{''}</td>)
+                }
+              })
+              let availableAction = {...props.availableAction}
+              let list = []
+              if (availableAction.Update) {
+                list.push(<a href='javascript:void(0);' onClick={(event) => { event.preventDefault(); openUpdateModal(data) }} >{'Edit'}</a>)
+              }
+              if (availableAction.Delete) {
+                list.push(<a onClick={(event) => { event.preventDefault(); openDeleteModal(data) }} href='javascript:void(0);'>{'Delete'}</a>)
+              }
+              rowColumn.push(<td className='' key={'last' + index}>{list}</td>)
               return (
                 <table style={{'tableLayout': 'fixed', 'width': '100%'}} className='table table-striped- table-bordered table-hover table-checkable responsive no-wrap dataTable dtr-inline collapsed' id='m_table_1' aria-describedby='m_table_1_info' role='grid'>
-                  <thead>
+                  {index === 0 && (<thead>
                     {tableHeader}
-                  </thead>
+                  </thead>)}
                   <tbody>
-                    <tr key={index + 1}>
+                    <tr key={'tr' + index}>
                       {rowColumn}
                     </tr>
                     {childList}
