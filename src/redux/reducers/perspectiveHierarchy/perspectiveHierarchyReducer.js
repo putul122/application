@@ -20,6 +20,7 @@ const SET_PER_PAGE = 'perspectivesHierarchyReducer/SET_PER_PAGE'
 const RESET_RESPONSE = 'perspectivesHierarchyReducer/RESET_RESPONSE'
 const SET_CONNECTION_DATA = 'perspectivesHierarchyReducer/SET_CONNECTION_DATA'
 const SET_EXPAND_SETTINGS = 'perspectivesHierarchyReducer/SET_EXPAND_SETTINGS'
+const SET_HEADER_DATA = 'perspectivesHierarchyReducer/SET_HEADER_DATA'
 
 export const actions = {
   FETCH_MODEL_PRESPECTIVES_SUCCESS,
@@ -35,7 +36,8 @@ export const actions = {
   UPDATE_COMPONENT_MODEL_PRESPECTIVES_SUCCESS,
   SET_CONNECTION_DATA,
   FETCH_DROPDOWN_DATA_SUCCESS,
-  SET_EXPAND_SETTINGS
+  SET_EXPAND_SETTINGS,
+  SET_HEADER_DATA
 }
 
 export const actionCreators = {
@@ -45,7 +47,8 @@ export const actionCreators = {
   setPerPage: createAction(SET_PER_PAGE),
   resetResponse: createAction(RESET_RESPONSE),
   setConnectionData: createAction(SET_CONNECTION_DATA),
-  setExpandSettings: createAction(SET_EXPAND_SETTINGS)
+  setExpandSettings: createAction(SET_EXPAND_SETTINGS),
+  setHeaderData: createAction(SET_HEADER_DATA)
 }
 
 export const initialState = {
@@ -94,6 +97,12 @@ export const initialState = {
     modelPerspectives: [],
     metaModelPerspectives: [],
     processAPIResponse: false
+  },
+  headerData: {
+    metaModelPerspective: [],
+    toProcess: false,
+    processedIndex: [],
+    headerColumn: []
   }
 }
 
@@ -159,6 +168,10 @@ export default handleActions(
     [FETCH_NESTED_MODEL_PRESPECTIVES_SUCCESS]: (state, action) => ({
       ...state,
       nestedModelPerspectives: action.payload
+    }),
+    [SET_HEADER_DATA]: (state, action) => ({
+      ...state,
+      headerData: action.payload
     })
   },
   initialState

@@ -22,7 +22,8 @@ export function mapStateToProps (state, props) {
     updateComponentResponse: state.perspectiveHierarchyReducer.updateComponentResponse,
     dropdownData: state.perspectiveHierarchyReducer.dropdownData,
     expandSettings: state.perspectiveHierarchyReducer.expandSettings,
-    nestedModelPerspectives: state.perspectiveHierarchyReducer.nestedModelPerspectives
+    nestedModelPerspectives: state.perspectiveHierarchyReducer.nestedModelPerspectives,
+    headerData: state.perspectiveHierarchyReducer.headerData
   }
 }
 // In Object form, each funciton is automatically wrapped in a dispatch
@@ -43,7 +44,8 @@ export const propsMapping: Callbacks = {
   updateModelPrespectives: sagaActions.modelActions.updateModelPrespectives,
   updateComponentModelPrespectives: sagaActions.modelActions.updateComponentModelPrespectives,
   fetchNestedModelPrespectives: sagaActions.serviceActions.fetchNestedModelPrespectives,
-  setExpandSettings: actionCreators.setExpandSettings
+  setExpandSettings: actionCreators.setExpandSettings,
+  setHeaderData: actionCreators.setHeaderData
 }
 
 // If you want to use the function mapping
@@ -86,22 +88,22 @@ export default compose(
       metaModelPrespectivePayload.id = this.props.match.params.id
       metaModelPrespectivePayload.viewKey = {'view_key': this.props.match.params.viewKey}
       this.props.fetchMetaModelPrespective && this.props.fetchMetaModelPrespective(metaModelPrespectivePayload)
-      let payload1 = {}
-      payload1['meta_model_perspective_id[0]'] = 16
-      payload1['parent_reference'] = '8JWqhPHZJ0'
-      this.props.fetchNestedModelPrespectives && this.props.fetchNestedModelPrespectives(payload1)
-      let payload2 = {}
-      payload2['meta_model_perspective_id[0]'] = 14
-      payload2['parent_reference'] = 'dxwzT6HLVJ'
-      this.props.fetchNestedModelPrespectives && this.props.fetchNestedModelPrespectives(payload2)
-      let payload3 = {}
-      payload3['meta_model_perspective_id[0]'] = 17
-      payload3['parent_reference'] = 'dxwJC6HLVj'
-      this.props.fetchNestedModelPrespectives && this.props.fetchNestedModelPrespectives(payload3)
-      let payload4 = {}
-      payload4['meta_model_perspective_id[0]'] = 18
-      payload4['parent_reference'] = '2v0Uls0zw'
-      this.props.fetchNestedModelPrespectives && this.props.fetchNestedModelPrespectives(payload4)
+      // let payload1 = {}
+      // payload1['meta_model_perspective_id[0]'] = 16
+      // payload1['parent_reference'] = '8JWqhPHZJ0'
+      // this.props.fetchNestedModelPrespectives && this.props.fetchNestedModelPrespectives(payload1)
+      // let payload2 = {}
+      // payload2['meta_model_perspective_id[0]'] = 14
+      // payload2['parent_reference'] = 'dxwzT6HLVJ'
+      // this.props.fetchNestedModelPrespectives && this.props.fetchNestedModelPrespectives(payload2)
+      // let payload3 = {}
+      // payload3['meta_model_perspective_id[0]'] = 17
+      // payload3['parent_reference'] = 'dxwJC6HLVj'
+      // this.props.fetchNestedModelPrespectives && this.props.fetchNestedModelPrespectives(payload3)
+      // let payload4 = {}
+      // payload4['meta_model_perspective_id[0]'] = 18
+      // payload4['parent_reference'] = '2v0Uls0zw'
+      // this.props.fetchNestedModelPrespectives && this.props.fetchNestedModelPrespectives(payload4)
     },
     componentDidMount: function () {
       // eslint-disable-next-line
@@ -168,6 +170,12 @@ export default compose(
           nextProps.setConnectionData(connectionData)
           availableAction['toProcess'] = false
           nextProps.setAvailableAction(availableAction)
+          let headerData = {...this.props.headerData}
+          let metaData = []
+          metaData.push(nextProps.metaModelPerspective.resources[0])
+          headerData.metaModelPerspective = metaData
+          headerData.toProcess = true
+          this.props.setHeaderData(headerData)
         }
       }
       if (nextProps.createComponentResponse && nextProps.createComponentResponse !== '') {
@@ -258,6 +266,49 @@ export default compose(
           toastr.error(nextProps.nestedModelPerspectives.error_message, nextProps.nestedModelPerspectives.error_code)
         }
         nextProps.resetResponse()
+      }
+      if (nextProps.headerData.toProcess) {
+        console.log('to prosess header data', nextProps.headerData)
+        let headerData = JSON.parse(JSON.stringify(nextProps.headerData))
+        let metaModelPerspective = JSON.parse(JSON.stringify(headerData.metaModelPerspective))
+        let processedIndex = headerData.processedIndex
+        let toProcess = false
+        if (nextProps.headerData.metaModelPerspective.length > 0) {
+          nextProps.headerData.metaModelPerspective.forEach(function (data, index) {
+            if (!processedIndex.includes(index)) {
+              if (data.parts.length > 0) {
+                data.parts.forEach(function (partData, idx) {
+                  if (partData.constraint_perspective !== null) {
+                    metaModelPerspective.push(partData.constraint_perspective)
+                    processedIndex.push(index)
+                    toProcess = true
+                  }
+                })
+              }
+            }
+          })
+        }
+        headerData.metaModelPerspective = metaModelPerspective
+        headerData.processedIndex = processedIndex
+        headerData.toProcess = toProcess
+        if (!toProcess) {
+          let headerColumn = []
+          if (metaModelPerspective.length > 0) {
+            metaModelPerspective.forEach(function (data, index) {
+              data.parts.forEach(function (partData, idx) {
+                if (partData.standard_property !== null && partData.type_property === null) { // Standard Property
+                  if (partData.standard_property === 'name') {
+                    headerColumn.push(partData.name)
+                  }
+                } else if (partData.standard_property === null && partData.type_property === null && partData.constraint_perspective === null) { // Connection Property
+                  headerColumn.push(partData.name)
+                }
+              })
+            })
+          }
+          headerData.headerColumn = headerColumn
+        }
+        this.props.setHeaderData(headerData)
       }
     }
   })

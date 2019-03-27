@@ -31,7 +31,6 @@ export default function PerspectiveHierarchy (props) {
   let modelPrespectivesList = ''
   let totalPages
   let tableHeader = []
-  let labels = []
   let messageList = ''
   let serviceName = props.addSettings.deleteObject ? props.addSettings.deleteObject.subject_name : ''
   let expandSettings = props.expandSettings
@@ -472,9 +471,11 @@ export default function PerspectiveHierarchy (props) {
     closeModal()
   }
   let genericExpandRow = function (value, startLevel) {
+    console.log('generic function', value, startLevel)
     let childList = ''
     let expandSettings = JSON.parse(JSON.stringify(props.expandSettings))
     let expandLevel = expandSettings.level
+    console.log('expand level', expandLevel)
     if (expandLevel >= startLevel) {
       if (expandSettings.selectedObject[expandLevel].name === value && expandSettings.selectedObject[expandLevel].expandFlag) {
         // faClass = 'fa fa-minus'
@@ -528,7 +529,40 @@ export default function PerspectiveHierarchy (props) {
         }
       }
     }
-    return childList
+    console.log('childList ---------M', childList)
+    if (expandLevel > startLevel) {
+      console.log('nested if', startLevel, childList)
+      if (Array.isArray(childList)) {
+        let value = expandSettings.selectedObject[startLevel + 1].name
+        // return childList.concat(genericExpandRow(value, startLevel + 1))
+        return Array.prototype.push.apply(childList, genericExpandRow(value, startLevel + 1))
+      } else {
+        childList = []
+        let value = expandSettings.selectedObject[startLevel + 1].name
+        // return childList.concat(genericExpandRow(value, startLevel + 1))
+        return Array.prototype.push.apply(childList, genericExpandRow(value, startLevel + 1))
+      }
+    } else if (expandLevel === startLevel) {
+      console.log('nested if equal', startLevel, childList)
+      return childList
+    }
+  }
+  if (!props.headerData.toProcess) {
+    if (props.headerData.metaModelPerspective.length > 0) {
+      tableHeader = []
+      props.headerData.metaModelPerspective.forEach(function (data, index) {
+        data.parts.forEach(function (partData, idx) {
+          if (partData.standard_property !== null && partData.type_property === null) { // Standard Property
+            if (partData.standard_property === 'name') {
+              tableHeader.push(<th key={index + 'col' + idx} className=''><h5>{partData.name}</h5></th>)
+            }
+          } else if (partData.standard_property === null && partData.type_property === null && partData.constraint_perspective === null) { // Connection Property
+            tableHeader.push(<th key={index + 'col' + idx} className=''><h5>{partData.name}</h5></th>)
+          }
+        })
+      })
+    }
+    tableHeader.push(<th key={'last'} className=''><h5>Action</h5></th>)
   }
   let listModelPrespectives = function () {
     console.log('list modal pers', props)
@@ -561,20 +595,25 @@ export default function PerspectiveHierarchy (props) {
                 data.parts.forEach(function (partData, ix) {
                   let value
                   let isName = false
+                  let toPush = false
                   if (labelParts[ix].standard_property !== null && labelParts[ix].type_property === null) { // Standard Property
                     // console.log('partData standard property', partData, labelParts[ix], ix)
-                    isName = true
-                    value = partData ? partData.value : ''
-                    selectedObject.name = value
-                    if (expandSettings.level !== null) {
-                      // expand row is clicked for first row
-                      if (expandSettings.level >= 0) {
-                        let startLevel = 0
-                        childList = genericExpandRow(value, startLevel)
+                    if (labelParts[ix].standard_property === 'name') {
+                      isName = true
+                      toPush = true
+                      value = partData ? partData.value : ''
+                      selectedObject.name = value
+                      if (expandSettings.level !== null) {
+                        // expand row is clicked for first row
+                        if (expandSettings.level >= 0) {
+                          let startLevel = 0
+                          childList = genericExpandRow(value, startLevel)
+                        }
                       }
                     }
                   } else if (labelParts[ix].standard_property === null && labelParts[ix].type_property === null) { // Connection Property
                     // console.log('partData', partData, labelParts[ix], ix)
+                    toPush = true
                     if (Array.isArray(partData.value)) {
                       let targetComponents = []
                       partData.value.forEach(function (data, index) {
@@ -603,7 +642,9 @@ export default function PerspectiveHierarchy (props) {
                     value = partData.value !== null ? partData.value.other_value : ''
                   }
                   // console.log('value', value)
-                  rowColumn.push(<td className='' key={'ch_' + index + '_' + ix}>{isName && (<i className={faClass} aria-hidden='true' onClick={(event) => { event.preventDefault(); handleClick(selectedObject, 0) }} style={{'cursor': 'pointer'}} />)} {value}</td>)
+                  if (toPush) {
+                    rowColumn.push(<td className='' key={'ch_' + index + '_' + ix}>{isName && (<i className={faClass} aria-hidden='true' onClick={(event) => { event.preventDefault(); handleClick(selectedObject, 0) }} style={{'cursor': 'pointer'}} />)} {value}</td>)
+                  }
                 })
                 let availableAction = {...props.availableAction}
                 let list = []
@@ -616,12 +657,17 @@ export default function PerspectiveHierarchy (props) {
                 rowColumn.push(<td className='' key={'last' + index}>{list}</td>)
               }
               return (
-                <tbody>
-                  <tr key={index}>
-                    {rowColumn}
-                  </tr>
-                  {childList}
-                </tbody>
+                <table style={{'tableLayout': 'fixed', 'width': '100%'}} className='table table-striped- table-bordered table-hover table-checkable responsive no-wrap dataTable dtr-inline collapsed' id='m_table_1' aria-describedby='m_table_1_info' role='grid'>
+                  <thead>
+                    {tableHeader}
+                  </thead>
+                  <tbody>
+                    <tr key={index + 1}>
+                      {rowColumn}
+                    </tr>
+                    {childList}
+                  </tbody>
+                </table>
               )
             }
           })
@@ -702,16 +748,24 @@ export default function PerspectiveHierarchy (props) {
     }
     handleListAndPagination(page)
   }
-  if (props.metaModelPerspective && props.metaModelPerspective !== '' && props.metaModelPerspective.error_code === null) {
-    perspectiveName = props.metaModelPerspective.resources[0].name
-    if (props.metaModelPerspective.resources[0].parts.length > 0) {
-      tableHeader = props.metaModelPerspective.resources[0].parts.map(function (data, index) {
-        labels.push(data.name)
-        return (<th key={index} className=''><h5>{data.name}</h5></th>)
-      })
-    }
-    tableHeader.push(<th key={'last'} className=''><h5>Action</h5></th>)
-  }
+  // if (props.metaModelPerspective && props.metaModelPerspective !== '' && props.metaModelPerspective.error_code === null) {
+  //   perspectiveName = props.metaModelPerspective.resources[0].name
+  //   if (props.metaModelPerspective.resources[0].parts.length > 0) {
+  //     tableHeader = []
+  //     props.metaModelPerspective.resources[0].parts.forEach(function (data, index) {
+  //       if (data.standard_property !== null && data.type_property === null) { // Standard Property
+  //         if (data.standard_property === 'name') {
+  //           tableHeader.push(<th key={index} className=''><h5>{data.name}</h5></th>)
+  //         }
+  //       } else if (data.standard_property === null && data.type_property === null && data.constraint_perspective === null) { // Connection Property
+  //         tableHeader.push(<th key={index} className=''><h5>{data.name}</h5></th>)
+  //       } else if (data.standard_property === null && data.type_property === null && data.constraint_perspective !== null) { // Perspective Property
+  //         tableHeader.push(<th key={index} className=''><h5>{data.name}</h5></th>)
+  //       }
+  //     })
+  //   }
+  //   tableHeader.push(<th key={'last'} className=''><h5>Action</h5></th>)
+  // }
   let handleSelectChange = function (index) {
     return function (newValue: any, actionMeta: any) {
       console.log('newValue', newValue)
@@ -932,16 +986,7 @@ return (
                       </div>
                     </div>
                     <div className='dataTables_scrollBody' style={{position: 'relative', overflow: 'auto', width: '100%', 'maxHeight': '100vh'}}>
-                      <table className='m-portlet table table-striped- table-bordered table-hover table-checkable dataTable no-footer' id='m_table_1' aria-describedby='m_table_1_info' role='grid'>
-                        <thead>
-                          <tr role='row'>
-                            {tableHeader}
-                          </tr>
-                        </thead>
-                        {/* <tbody> */}
-                        {modelPrespectivesList}
-                        {/* </tbody> */}
-                      </table>
+                      {modelPrespectivesList}
                     </div>
                     <div className='row'>
                       <div className='col-md-12' id='scrolling_vertical'>
@@ -1117,5 +1162,6 @@ return (
     // crude: PropTypes.any,
     availableAction: PropTypes.any,
     connectionData: PropTypes.any,
-    expandSettings: PropTypes.any
+    expandSettings: PropTypes.any,
+    headerData: PropTypes.any
   }
