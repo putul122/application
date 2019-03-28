@@ -482,30 +482,73 @@ export default function PerspectiveHierarchy (props) {
   }
   let buildRow = function (childData, currentLevel) {
     let childLabelParts = props.expandSettings.metaModelPerspectives[currentLevel].parts
-          console.log('childLabelParts', childLabelParts)
+    console.log('childLabelParts', childLabelParts)
     let childRowColumn = []
     let faClass = 'fa fa-plus'
     let selectedObject = {}
     console.log('currentLevel', currentLevel)
+    let headerColumn = []
+    props.headerData.headerColumn.forEach(function (data, index) {
+      let obj = {}
+      obj.name = data
+      obj.isProcessed = false
+      obj.level = currentLevel
+      headerColumn.push(obj)
+    })
     if (childData.parts) {
+      childData.parts.forEach(function (childPartData, cix) {
+        if (childLabelParts[cix].standard_property !== null && childLabelParts[cix].type_property === null) { // Standard Property
+          if (childLabelParts[cix].standard_property === 'name') {
+            selectedObject.name = childPartData ? childPartData.value : ''
+          }
+        } else if (childLabelParts[cix].standard_property === null && childLabelParts[cix].type_property === null) { // Connection Property
+          if (childLabelParts[cix].constraint_perspective) {
+            selectedObject.parentReference = childPartData.value.parent_reference
+            selectedObject.metaModelPerspectives = childLabelParts[cix].constraint_perspective
+          }
+        }
+      })
       childData.parts.forEach(function (childPartData, cix) {
         let childValue
         if (childLabelParts[cix].standard_property !== null && childLabelParts[cix].type_property === null) { // Standard Property
           if (childLabelParts[cix].standard_property === 'name') {
             childValue = childPartData ? childPartData.value : ''
-            selectedObject.name = childValue
+            // selectedObject.name = childValue
+            let columnId = props.headerData.headerColumn.indexOf(childLabelParts[cix].name)
+            if (columnId !== -1) {
+              headerColumn[columnId].isProcessed = true
+              headerColumn[columnId].level = currentLevel
+              if (columnId > 0) {
+                for (let i = 0; i < columnId; i++) {
+                  headerColumn[columnId].isProcessed = true
+                  headerColumn[columnId].level = currentLevel
+                  childRowColumn.push(<td className='' key={'ch_' + '_' + currentLevel + '_start' + i}>{''}</td>)
+                }
+              }
+            }
             childRowColumn.push(<td className='' key={'ch_' + '_' + currentLevel + '_' + cix}><i className={faClass} aria-hidden='true' onClick={(event) => { event.preventDefault(); handleClick(selectedObject, currentLevel + 1) }} style={{'cursor': 'pointer'}} /> {childValue}</td>)
           }
         } else if (childLabelParts[cix].standard_property === null && childLabelParts[cix].type_property === null) { // Connection Property
           // console.log('partData', partData, labelParts[ix], ix)
           if (childLabelParts[cix].constraint_perspective) {
-            selectedObject.parentReference = childPartData.value.parent_reference
+            // selectedObject.parentReference = childPartData.value.parent_reference
             childValue = childLabelParts[cix].constraint_perspective.name
-            selectedObject.metaModelPerspectives = childLabelParts[cix].constraint_perspective
+            // selectedObject.metaModelPerspectives = childLabelParts[cix].constraint_perspective
             childRowColumn.push(<td className='' key={'ch_' + '_' + currentLevel + '_' + cix}><a href='javascript:void(0);' >{'Add ' + childValue}</a></td>)
+            let columnId = props.headerData.headerColumn.indexOf(childLabelParts[cix].name)
+            if (columnId !== -1) {
+              headerColumn[columnId].isProcessed = true
+              headerColumn[columnId].level = 0
+            }
           }
         }
       })
+      console.log('generate rows headerColumn', headerColumn)
+      // headerColumn.forEach(function (columnData, cid) {
+      //   if (!columnData.isProcessed) {
+      //     childRowColumn.push(<td className='' key={'ch_' + '_' + currentLevel + '_last' + cid} >{''}</td>)
+      //   }
+      // })
     }
     console.log('childRowColumn ->>>>>>>>>>', childRowColumn)
     return childRowColumn
@@ -530,7 +573,7 @@ export default function PerspectiveHierarchy (props) {
           if (expandSettings.selectedObject[startLevel].expandFlag) {
             // faClass = 'fa fa-minus'
             console.log('expandSettings', expandSettings)
-            if (props.expandSettings.modelPerspectives && props.expandSettings.modelPerspectives[startLevel].length > 0) {
+            if (props.expandSettings.modelPerspectives[startLevel] && props.expandSettings.modelPerspectives[startLevel].length > 0) {
               let childLabelParts = props.expandSettings.metaModelPerspectives[startLevel].parts
               console.log('childLabelParts', childLabelParts, props.expandSettings.modelPerspectives[startLevel])
               let parentList = []
@@ -542,11 +585,7 @@ export default function PerspectiveHierarchy (props) {
                 console.log('childRowColumn', childRowColumn, idx)
                 parentList.push(
                   <tr>
-                    <td>{''}</td>
-                    <td>{''}</td>
-                    <td>{''}</td>
                     {childRowColumn}
-                    <td>{''}</td>
                   </tr>
                 )
                 let found = []
@@ -624,7 +663,7 @@ export default function PerspectiveHierarchy (props) {
   }
   let listModelPrespectives = function () {
     console.log('list modal pers', props)
-    if (props.modelPrespectives !== '') {
+    if (props.modelPrespectives !== '' && props.metaModelPerspective !== '') {
       let labelParts = props.metaModelPerspective.resources[0].parts
       // let crude = props.crude
       // let mask = props.metaModelPerspective.resources[0].crude
@@ -694,7 +733,7 @@ export default function PerspectiveHierarchy (props) {
                     rowColumn.push(<td className='' key={'ch_' + index + '_' + ix}>{value}</td>)
                   } else if (labelParts[ix].constraint_perspective !== null) { // Perspectives Property
                     selectedObject.parentReference = partData.value.parent_reference
-                    value = 'Agreement'
+                    value = labelParts[ix].constraint_perspective.name
                     selectedObject.metaModelPerspectives = labelParts[ix].constraint_perspective
                     let columnId = props.headerData.headerColumn.indexOf(labelParts[ix].name)
                     if (columnId !== -1) {
@@ -712,7 +751,7 @@ export default function PerspectiveHierarchy (props) {
               console.log('headerColumn ----', headerColumn)
               headerColumn.forEach(function (columnData, cid) {
                 if (!columnData.isProcessed) {
-                  rowColumn.push(<td className='' key={'ch_' + index + '_cid' + cid}>{''}</td>)
+                  rowColumn.push(<td className='' key={'ch_' + index + '_emp' + cid} >{''}</td>)
                 }
               })
               let availableAction = {...props.availableAction}
@@ -723,7 +762,7 @@ export default function PerspectiveHierarchy (props) {
               if (availableAction.Delete) {
                 list.push(<a onClick={(event) => { event.preventDefault(); openDeleteModal(data) }} href='javascript:void(0);'>{'Delete'}</a>)
               }
-              rowColumn.push(<td className='' key={'last' + index}>{list}</td>)
+              rowColumn.push(<td className='' key={'last' + index} >{list}</td>)
               return (
                 <table style={{'tableLayout': 'fixed', 'width': '100%'}} className='table table-striped- table-bordered table-hover table-checkable responsive no-wrap dataTable dtr-inline collapsed' id='m_table_1' aria-describedby='m_table_1_info' role='grid'>
                   {index === 0 && (<thead>
@@ -857,6 +896,7 @@ export default function PerspectiveHierarchy (props) {
     // eslint-disable-next-line
     mApp && mApp.unblockPage()
     let connectionData = {...props.connectionData}
+    console.log('props', props.connectionData)
     connectionSelectBoxList = connectionData.data.map(function (data, index) {
       let selectOptions = connectionData.selectOption[index].map(function (component, id) {
         component.value = component.id
@@ -878,6 +918,7 @@ export default function PerspectiveHierarchy (props) {
         </div>
       </div>)
     })
+    console.log('connectionSelectBoxList', connectionSelectBoxList)
     businessPropertyList = connectionData.customerProperty.map(function (data, index) {
       let value = null
       if (data.type_property.property_type.key === 'Integer') {
@@ -958,6 +999,7 @@ export default function PerspectiveHierarchy (props) {
         </div>)
       }
     })
+    console.log('businessPropertyList', businessPropertyList)
   }
   if (props.addSettings.createResponse !== null) {
     if (props.addSettings.createResponse.length > 0) {
@@ -1124,7 +1166,7 @@ return (
                     </div>
                   </div>
                   {businessPropertyList}
-                  {connectionSelectBoxList}
+                  {'connectionSelectBoxList'}
                 </div>)}
                 {props.addSettings.createResponse !== null && (<div className='m-list-search__results'>
                   {messageList}

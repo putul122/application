@@ -88,22 +88,6 @@ export default compose(
       metaModelPrespectivePayload.id = this.props.match.params.id
       metaModelPrespectivePayload.viewKey = {'view_key': this.props.match.params.viewKey}
       this.props.fetchMetaModelPrespective && this.props.fetchMetaModelPrespective(metaModelPrespectivePayload)
-      // let payload1 = {}
-      // payload1['meta_model_perspective_id[0]'] = 16
-      // payload1['parent_reference'] = '8JWqhPHZJ0'
-      // this.props.fetchNestedModelPrespectives && this.props.fetchNestedModelPrespectives(payload1)
-      // let payload2 = {}
-      // payload2['meta_model_perspective_id[0]'] = 14
-      // payload2['parent_reference'] = 'dxwzT6HLVJ'
-      // this.props.fetchNestedModelPrespectives && this.props.fetchNestedModelPrespectives(payload2)
-      // let payload3 = {}
-      // payload3['meta_model_perspective_id[0]'] = 17
-      // payload3['parent_reference'] = 'dxwJC6HLVj'
-      // this.props.fetchNestedModelPrespectives && this.props.fetchNestedModelPrespectives(payload3)
-      // let payload4 = {}
-      // payload4['meta_model_perspective_id[0]'] = 18
-      // payload4['parent_reference'] = '2v0Uls0zw'
-      // this.props.fetchNestedModelPrespectives && this.props.fetchNestedModelPrespectives(payload4)
     },
     componentDidMount: function () {
       // eslint-disable-next-line

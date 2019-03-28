@@ -464,7 +464,7 @@ export default function Perspectives (props) {
                   let value
                   if (labelParts[ix].standard_property !== null && labelParts[ix].type_property === null) { // Standard Property
                     value = partData ? partData.value : ''
-                  } else if (labelParts[ix].standard_property === null && labelParts[ix].type_property === null) { // Connection Property
+                  } else if (labelParts[ix].standard_property === null && labelParts[ix].type_property === null && labelParts[ix].constraint_perspective === null) { // Connection Property
                     if (partData.value) {
                       let targetComponents = []
                       partData.value.forEach(function (data, index) {
